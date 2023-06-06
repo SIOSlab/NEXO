@@ -1,0 +1,7 @@
+quadrule.f90
+stroud.f90
+
+*.a
+*.so
+
+__pycache__/*

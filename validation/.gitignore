@@ -1,0 +1,6 @@
+gen/*
+plots/*
+results/*
+tables/*
+
+__pycache__/*

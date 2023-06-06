@@ -1,0 +1,115 @@
+# This file was produced by the NASA Exoplanet Archive  http://exoplanetarchive.ipac.caltech.edu
+# Thu Dec 29 17:39:41 2022
+#
+# CONSTRAINT:  where (plntname like 'GJ 504 b')
+#
+# COLUMN plntname:       Planet Name
+# COLUMN ra_str:         RA [sexagesimal]
+# COLUMN ra:             RA [deg]
+# COLUMN dec_str:        Dec [sexagesimal]
+# COLUMN dec:            Dec [deg]
+# COLUMN imdelthmag:     Delta mag H-band (planet-host) [mag]
+# COLUMN imdelthmagerr:  Delta mag H-band (planet-host) Unc. [mag]
+# COLUMN imdelthmaglim:  Delta mag H-band (planet-host) Limit Flag
+# COLUMN imdeltjmag:     Delta mag J-band (planet-host) [mag]
+# COLUMN imdeltjmagerr:  Delta mag J-band (planet-host) Unc. [mag]
+# COLUMN imdeltjmaglim:  Delta mag J-band (planet-host) Limit Flag
+# COLUMN imdeltkmag:     Delta mag K-band (planet-host) [mag]
+# COLUMN imdeltkmagerr:  Delta mag K-band (planet-host) Unc. [mag]
+# COLUMN imdeltkmaglim:  Delta mag K-band (planet-host) Limit Flag
+# COLUMN imdeltlpmag:    Delta mag Lp-band (planet-host) [mag]
+# COLUMN imdeltlpmagerr: Delta mag Lp-band (planet-host) Unc. [mag]
+# COLUMN imdeltlpmaglim: Delta mag Lp-band (planet-host) Limit Flag
+# COLUMN imangsep:       Projected separation star-planet [arcsec]
+# COLUMN imangseperr1:   Projected separation star-planet Upper Unc. [arcsec]
+# COLUMN imangseperr2:   Projected separation star-planet Lower Unc. [arcsec]
+# COLUMN imangseplim:    Projected separation star-planet Limit Flag
+# COLUMN imsep:          Projected separation star-planet [au]
+# COLUMN imseperr1:      Projected separation star-planet Upper Unc. [au]
+# COLUMN imseperr2:      Projected separation star-planet Lower Unc. [au]
+# COLUMN imseplim:       Projected separation star-planet Limit Flag
+# COLUMN imtruesep:      True separation star-planet [au]
+# COLUMN imtrueseperr1:  True separation star-planet Upper Unc. [au]
+# COLUMN imtrueseperr2:  True separation star-planet Lower Unc. [au]
+# COLUMN imtrueseplim:   True separation star-planet Limit Flag
+# COLUMN impa:           Position angle star-planet [deg]
+# COLUMN impaerr1:       Position angle star-planet Upper Unc. [deg]
+# COLUMN impaerr2:       Position angle star-planet Lower Unc. [deg]
+# COLUMN impalim:        Position angle star-planet Limit Flag
+# COLUMN imdist:         Distance [pc]
+# COLUMN imdisterr1:     Distance Upper Unc. [pc]
+# COLUMN imdisterr2:     Distance Lower Unc. [pc]
+# COLUMN imdistlim:      Distance Limit Flag
+# COLUMN imtelescope:    Telescope
+# COLUMN iminstrument:   Instrument
+# COLUMN imdateobs:      Date Obs [UT]
+# COLUMN imcluster:      Cluster or group membership of host
+# COLUMN imreflink:      Reference
+# COLUMN imdisk:         Circumstellar Disk Detected?
+# COLUMN imcorona:       Coronagraph Used?
+# COLUMN imifu:          IFU Used?
+# COLUMN ns:             Number of Stars
+# COLUMN glon:           Galactic Longitude [deg]
+# COLUMN glat:           Galactic Latitude [deg]
+# COLUMN imjmag:         Stellar Magnitude J-band [mag]
+# COLUMN imjmagerr:      Stellar Magnitude J-band Unc. [mag]
+# COLUMN imjmaglim:      Stellar Magnitude J-band Limit Flag
+# COLUMN imhmag:         Stellar Magnitude H-band [mag]
+# COLUMN imhmagerr:      Stellar Magnitude H-band Unc. [mag]
+# COLUMN imhmaglim:      Stellar Magnitude H-band Limit Flag
+# COLUMN imkmag:         Stellar Magnitude K-band [mag]
+# COLUMN imkmagerr:      Stellar Magnitude K-band Unc. [mag]
+# COLUMN imkmaglim:      Stellar Magnitude K-band Limit Flag
+# COLUMN imlpmag:        Stellar Magnitude Lp-band [mag]
+# COLUMN imlpmagerr:     Stellar Magnitude Lp-band Unc. [mag]
+# COLUMN imlpmaglim:     Stellar Magnitude Lp-band Limit Flag
+# COLUMN implnjmag:      Planet Magnitude J-band [mag]
+# COLUMN implnjmagerr:   Planet Magnitude J-band Unc. [mag]
+# COLUMN implnjmaglim:   Planet Magnitude J-band Limit Flag
+# COLUMN implnhmag:      Planet Magnitude H-band [mag]
+# COLUMN implnhmagerr:   Planet Magnitude H-band Unc. [mag]
+# COLUMN implnhmaglim:   Planet Magnitude H-band Limit Flag
+# COLUMN implnkmag:      Planet Magnitude K-band [mag]
+# COLUMN implnkmagerr:   Planet Magnitude K-band Unc. [mag]
+# COLUMN implnkmaglim:   Planet Magnitude K-band Limit Flag
+# COLUMN implnlpmag:     Planet Magnitude Lp-band [mag]
+# COLUMN implnlpmagerr:  Planet Magnitude Lp-band Unc. [mag]
+# COLUMN implnlpmaglim:  Planet Magnitude Lp-band Limit Flag
+# COLUMN imstype:        Stellar Spectral Type
+# COLUMN immass:         Stellar Mass [solar mass]
+# COLUMN immasserr1:     Stellar Mass Upper Unc. [solar mass]
+# COLUMN immasserr2:     Stellar Mass Lower Unc. [solar mass]
+# COLUMN immasslim:      Stellar Mass Limit Flag
+# COLUMN image:          Stellar Age [My]
+# COLUMN imageerr1:      Stellar Age Upper Unc. [My]
+# COLUMN imageerr2:      Stellar Age Lower Unc. [My]
+# COLUMN imagelim:       Stellar Age Limit Flag
+# COLUMN imlum:          Stellar Luminosity [solar luminosity]
+# COLUMN imlumerr1:      Stellar Luminosity Upper Unc. [solar luminosity]
+# COLUMN imlumerr2:      Stellar Luminosity Lower Unc. [solar luminosity]
+# COLUMN imlumlim:       Stellar Luminosity Limit Flag
+# COLUMN implmass:       Planet Mass [Jupiter mass]
+# COLUMN implmasserr1:   Planet Mass Upper Unc. [Jupiter mass]
+# COLUMN implmasserr2:   Planet Mass Lower Unc. [Jupiter mass]
+# COLUMN implmasslim:    Planet Mass Limit Flag
+# COLUMN implstype:      Planet Spectral Type
+# COLUMN impltemp:       Planet Temperature [K]
+# COLUMN impltemperr1:   Planet Temperature Upper Unc. [K]
+# COLUMN impltemperr2:   Planet Temperature Lower Unc. [K]
+# COLUMN impltemplim:    Planet Temperature Limit Flag
+# COLUMN implradius:     Planet Radius [Jupiter radius]
+# COLUMN implradiuserr1: Planet Radius Upper Unc. [Jupiter radius]
+# COLUMN implradiuserr2: Planet Radius Lower Unc. [Jupiter radius]
+# COLUMN implradiuslim:  Planet Radius Limit Flag
+# COLUMN immodel:        Model Description
+# COLUMN immodeldef:     Default Model
+# COLUMN imnotes:        Notes
+#
+plntname,ra_str,ra,dec_str,dec,imdelthmag,imdelthmagerr,imdelthmaglim,imdeltjmag,imdeltjmagerr,imdeltjmaglim,imdeltkmag,imdeltkmagerr,imdeltkmaglim,imdeltlpmag,imdeltlpmagerr,imdeltlpmaglim,imangsep,imangseperr1,imangseperr2,imangseplim,imsep,imseperr1,imseperr2,imseplim,imtruesep,imtrueseperr1,imtrueseperr2,imtrueseplim,impa,impaerr1,impaerr2,impalim,imdist,imdisterr1,imdisterr2,imdistlim,imtelescope,iminstrument,imdateobs,imcluster,imreflink,imdisk,imcorona,imifu,ns,glon,glat,imjmag,imjmagerr,imjmaglim,imhmag,imhmagerr,imhmaglim,imkmag,imkmagerr,imkmaglim,imlpmag,imlpmagerr,imlpmaglim,implnjmag,implnjmagerr,implnjmaglim,implnhmag,implnhmagerr,implnhmaglim,implnkmag,implnkmagerr,implnkmaglim,implnlpmag,implnlpmagerr,implnlpmaglim,imstype,immass,immasserr1,immasserr2,immasslim,image,imageerr1,imageerr2,imagelim,imlum,imlumerr1,imlumerr2,imlumlim,implmass,implmasserr1,implmasserr2,implmasslim,implstype,impltemp,impltemperr1,impltemperr2,impltemplim,implradius,implradiuserr1,implradiuserr2,implradiuslim,immodel,immodeldef,imnotes
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,16.28,0.14,0,,,,,,,,,,2.479,0.016,-0.016,0,43.5,0.1,-0.1,0,,,,,327.9,0.4,-0.4,0,17.6,0.1,-0.1,0,Subaru,HiCIAO,2011-03-26,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,1,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,,,,20.14,0.14,0,,,,,,,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,16.28,0.14,0,,,,,,,,,,2.483,0.008,-0.008,0,43.6,0.1,-0.1,0,,,,,327.4,0.2,-0.2,0,17.6,0.1,-0.1,0,Subaru,HiCIAO,2011-05-22,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,1,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,,,,20.14,0.14,0,,,,,,,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,,,,,,,,,,1.290000000000e+01,2.100000000000e-01,0,2.481,0.033,-0.033,0,43.6,0.1,-0.1,0,,,,,326.8,0.9,-0.9,0,17.6,0.1,-0.1,0,Subaru,IRCS,2011-08-12,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,0,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,,,,,,,,,,1.684000000000e+01,1.900000000000e-01,0,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,,,,,,,,,,1.290000000000e+01,2.100000000000e-01,0,2.448,0.024,-0.024,0,43.0,0.1,-0.1,0,,,,,325.8,0.7,-0.7,0,17.6,0.1,-0.1,0,Subaru,IRCS,2011-08-15,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,0,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,,,,,,,,,,1.684000000000e+01,1.900000000000e-01,0,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,,,,,,,1.538200000000e+01,2.800000000000e-01,0,,,,2.483,0.015,-0.015,0,43.6,0.1,-0.1,0,,,,,326.5,0.4,-0.4,0,17.6,0.1,-0.1,0,Subaru,HiCIAO,2012-02-28,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,1,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,,0,,,,,,,1.919000000000e+01,2.800000000000e-01,0,,,,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,,,,1.580400000000e+01,1.500000000000e-01,0,,,,,,,2.487,0.008,-0.008,0,43.7,0.1,-0.1,0,,,,,326.5,0.2,-0.2,0,17.6,0.1,-0.1,0,Subaru,HiCIAO,2012-04-12,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,1,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,1.991000000000e+01,1.500000000000e-01,0,,,,,,,,,,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
+GJ 504 b,13:16:46.52,199.1938170,+09:25:27.0,9.42415619,,,,,,,,,,1.290000000000e+01,2.100000000000e-01,0,2.499,0.026,-0.026,0,43.9,0.1,-0.1,0,,,,,326.1,0.6,-0.6,0,17.6,0.1,-0.1,0,Subaru,IRCS,2012-05-25,,<a href=https://ui.adsabs.harvard.edu/abs/2013ApJ...774...11K/abstract target=ref>Kuzuhara et al. 2013</a>,0,0,0,1,322.79015,71.3123997,4.11,,0,3.86,,0,3.81,,0,3.94,0.090,0,,,,,,,,,,1.684000000000e+01,1.900000000000e-01,0,G0V,1.22,0.08,-0.08,0,160,70,-60,0,0.3,0,0,0,4,4.500000000000e+00,-1.000000000000e+00,0,T/Y,510,30,-20,0,,,,,"COND, Baraffe et al. 2003",0,
