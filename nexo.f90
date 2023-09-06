@@ -1056,3 +1056,164 @@ subroutine coe_ci_stroud(xm, l_xx, pxm, std_px, conf, ci_sma, ci_ecc, &
             ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp)
 
 end subroutine
+
+subroutine eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
+        rmse, chi2m, ok)
+
+    implicit none
+
+    ! Inputs
+    integer, intent(in) :: ns
+    real(8), intent(in) :: lam_tru
+    real(8), intent(in), dimension(2) :: eta_tru
+    real(8), intent(in), dimension(2, 2) :: xi_tru
+    real(8), intent(in), dimension(ns) :: lam
+    real(8), intent(in), dimension(2, ns) :: eta
+    real(8), intent(in), dimension(2, 2, ns) :: xi
+    real(8), intent(in), dimension(ns) :: w
+    real(8), intent(in) :: ti, tf
+
+    ! Outputs
+    real(8), intent(out) :: rmse, chi2m
+    logical, intent(out) :: ok
+
+    ! Parameters
+    integer, parameter :: key   = 6
+    integer, parameter :: limit = 10
+    integer, parameter :: lenw  = limit * 10
+    real(8), parameter :: atol  = 1E-6
+    real(8), parameter :: rtol  = 1E-6
+
+    ! Local variables
+    integer :: neval, ier_mse, ier_chi2m, last
+    integer, dimension(limit) :: iwork
+    real(8) :: res, abserr
+    real(8), dimension(lenw) :: work
+    logical :: eval_chi2
+
+    ! Mean-square error
+    eval_chi2 = .false.
+    call dqag(f, ti, tf, atol, rtol, key, res, abserr, neval, ier_mse, &
+        limit, lenw, last, iwork, work)
+    rmse = sqrt(res)
+
+    ! Compute mean chi-square value
+    eval_chi2 = .true.
+    call dqag(f, ti, tf, atol, rtol, key, res, abserr, neval, ier_chi2m, &
+        limit, lenw, last, iwork, work)
+    chi2m = res
+
+    ! Check if integrations were sucessful
+    ok = (ier_mse == 0) .and. (ier_chi2m == 0)
+
+    contains
+
+        real(8) function f(t)
+
+            implicit none
+
+            ! Input
+            real(8) :: t
+
+            ! Local variables
+            integer :: info
+            real(8), dimension(2) :: z_tru, zm, z_err, tau
+            real(8), dimension(2, ns) :: z, work
+            real(8), dimension(ns) :: wa
+            logical, dimension(1) :: ok_tru
+            logical, dimension(ns) :: ok
+
+            ! Evaluate true measurement
+            call eval_z(1, 1, [lam_tru], eta_tru, xi_tru, [t], z_tru, ok_tru)
+            if (.not. ok_tru(1)) stop 'Estimator error calculation failed' 
+
+            ! Evaluate sample measurements
+            call eval_z(ns, 1, lam, eta, xi, [t], z, ok)
+            if (all(.not. ok)) stop 'Estimator error calculation failed'
+                
+            ! Set bad weights & measurements to zero
+            where (ok)
+                wa = w
+            else where
+                wa = 0
+                z(1, :) = 0
+                z(2, :) = 0
+            end where
+
+            ! Re-normalize weights
+            wa = wa / sum(wa)
+
+            ! Measurement mean
+            zm = matmul(z, wa)
+
+            ! Estimation error
+            z_err = zm - z_tru
+
+            ! Evaluate error
+            if (eval_chi2) then
+
+                ! Centralize & scale sample measurements
+                z = (z - spread(zm, 2, ns)) * spread(wa, 1, 2)
+
+                ! LQ decomposition
+                call dgelqf(2, ns, z, 2, tau, work, 2*ns, info)
+                if (info /= 0) stop 'LQ decomposition failed!' 
+
+                ! Normalize error
+                call dtrsv('L', 'N', 'N', 2, z, 2, z_err, 1) 
+
+            end if
+
+            ! Time-scaled squared estimation error
+            f = norm2(z_err)**2 / (tf - ti)
+
+        end function
+
+end subroutine
+
+subroutine eval_err_srspf(lam_tru, eta_tru, xi_tru, xm, l_xx, ti, tf, &
+        rmse, chi2m, ok)
+
+    implicit none
+
+    ! Inputs
+    real(8), intent(in) :: lam_tru
+    real(8), intent(in), dimension(2) :: eta_tru
+    real(8), intent(in), dimension(2, 2) :: xi_tru
+    real(8), intent(in), dimension(7) :: xm
+    real(8), intent(in), dimension(7, 7) :: l_xx
+    real(8), intent(in) :: ti, tf
+
+    ! Outputs
+    real(8), intent(out) :: rmse, chi2m
+    logical, intent(out) :: ok
+    
+    ! Local variables
+    integer :: ns
+    real(8), allocatable :: x(:, :), w(:), lam(:), eta(:, :), xi(:, :, :)
+
+    ! Number of sample points for filter
+    call en_r2_05_3_size(7, ns)
+ 
+    ! Allocate arrays for points & weights
+    allocate(x(7, ns), w(ns), lam(ns), eta(2, ns), xi(2, 2, ns))
+
+    ! Cubature rule
+    call en_r2_05_3(7, ns, x, w)
+ 
+    ! Centralized sample points
+    call dtrmm('L', 'L', 'N', 'N', 7, ns, sqrt(2.0D0), l_xx, 7, x, 7)
+
+    ! Non-central sample points
+    x = x + spread(xm, 2, ns)
+
+    ! Nonsingular elements
+    lam = x(1,   :)
+    eta = x(2:3, :)
+    xi  = reshape(x(4:7, :), [2, 2, ns])
+
+    ! Compute errors
+    call eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
+        rmse, chi2m, ok)
+
+end subroutine
