@@ -1079,10 +1079,10 @@ subroutine eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
 
     ! Parameters
     integer, parameter :: key   = 6
-    integer, parameter :: limit = 10
+    integer, parameter :: limit = 20
     integer, parameter :: lenw  = limit * 10
-    real(8), parameter :: atol  = 1E-6
-    real(8), parameter :: rtol  = 1E-6
+    real(8), parameter :: atol  = 1E-4
+    real(8), parameter :: rtol  = 1E-4
 
     ! Local variables
     integer :: neval, ier_mse, ier_chi2m, last
@@ -1153,7 +1153,7 @@ subroutine eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
             if (eval_chi2) then
 
                 ! Centralize & scale sample measurements
-                z = (z - spread(zm, 2, ns)) * spread(wa, 1, 2)
+                z = (z - spread(zm, 2, ns)) * spread(sqrt(wa), 1, 2)
 
                 ! LQ decomposition
                 call dgelqf(2, ns, z, 2, tau, work, 2*ns, info)

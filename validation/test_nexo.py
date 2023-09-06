@@ -95,7 +95,9 @@ def fit_orbit(j):
     ci = np.stack([ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per], -1)
 
     # Save results
-    np.savetxt('results/NEXO_ci_' + str(j+1) + '.csv', ci, delimiter=',')
+    np.savetxt('results/NEXO_ci_'   + str(j+1) + '.csv', ci,   delimiter=',')
+    np.savetxt('results/NEXO_xm_'   + str(j+1) + '.csv', xm,   delimiter=',')
+    np.savetxt('results/NEXO_l_xx_' + str(j+1) + '.csv', l_xx, delimiter=',')
 
     # Stop timer
     tf = time.time()
