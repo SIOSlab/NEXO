@@ -144,7 +144,7 @@ for m in range(3):
 # Tabulate resulys
 err_table = Table()
 err_table[' '] = methods
-err_table['RMSE'] = np.sqrt(np.nanmean(rmse**2, axis=1))
+err_table['RMSE (mas)'] = np.sqrt(np.nanmean(rmse**2, axis=1))
 err_table[r'Mean $\chi^2$'] = np.nanmean(chi2m, axis=1)
 
 # Save table

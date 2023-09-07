@@ -1078,11 +1078,11 @@ subroutine eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
     logical, intent(out) :: ok
 
     ! Parameters
-    integer, parameter :: key   = 6
-    integer, parameter :: limit = 20
-    integer, parameter :: lenw  = limit * 10
-    real(8), parameter :: atol  = 1E-4
-    real(8), parameter :: rtol  = 1E-4
+    integer, parameter :: key   = 3
+    integer, parameter :: limit = 1000
+    integer, parameter :: lenw  = limit * 4
+    real(8), parameter :: atol  = 1.0D-2
+    real(8), parameter :: rtol  = 1.0D-2
 
     ! Local variables
     integer :: neval, ier_mse, ier_chi2m, last
@@ -1105,6 +1105,8 @@ subroutine eval_err(ns, lam_tru, eta_tru, xi_tru, lam, eta, xi, w, ti, tf, &
 
     ! Check if integrations were sucessful
     ok = (ier_mse == 0) .and. (ier_chi2m == 0)
+
+    if (.not. ok) print*, 'ier: ', ier_mse, ier_chi2m
 
     contains
 
