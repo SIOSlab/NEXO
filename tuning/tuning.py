@@ -55,34 +55,19 @@ lam, eta, Xi = nexo.coe2nse(coe_tru['plx'], coe_tru['sma'], coe_tru['ecc'], \
 # Number of cases
 norb = len(coe_tru)
 
-# Reshaped xi array
-xi = np.empty((4, norb))
-xi[0:2, :] = Xi[:, 0, :]
-xi[2:4, :] = Xi[:, 1, :]
-
-# True x values
-x = np.vstack((lam, eta, xi))
-
 # Reference epoch (MJD)
 ref_epoch = 58849.0
+
+# Initial & final times for error metrics
+ti =  0.0
+tf = 10.0
 
 #-------------------------------------------------------------------------------
 
 # Arrays
 err_dim = (len(npass_vals), len(nq_vals), norb)
-lam_err = np.empty(err_dim)
-eta_err = np.empty(err_dim)
-xi_err  = np.empty(err_dim)
-inside  = np.empty(err_dim)
-
-# Confidence
-p = 0.95
-
-# Degrees of freedom
-df = 7
-
-# Maximum chi-square value
-chi2_max = df / (1 - p)
+rmse    = np.empty(err_dim)
+chi2m   = np.empty(err_dim)
 
 # Iterate over number of passes
 for i in range(len(npass_vals)):
@@ -126,65 +111,26 @@ for i in range(len(npass_vals)):
             xm, l_xx = nexo.mix_filter(npass, nq, plxm, std_plx, mm, std_m, \
                     min_per, max_per, std_lam, std_eta, t, z, cov_ww)
 
-            # Estimated nonsingular parameters
-            lam_est = xm[0]
-            eta_est = xm[1:3]
-            xi_est  = xm[3:7]
+            # Compute errors
+            rmse_k, chi2m_k, ok = nexo.eval_err_srspf(lam[k], eta[:, k], Xi[:, :, k], \
+                                        xm, l_xx, ti, tf)
+            # Stop if error in error
+            if (not ok):
+                print('Error calculation failed!')
+                exit()
 
-            # Errors
-            lam_err[i, j, k] = np.abs(lam_est - lam[k])
-            eta_err[i, j, k] = 100 * np.linalg.norm(eta_est - eta[:, k]) \
-                                    / np.linalg.norm(eta[:, k])
-            xi_err [i, j, k] = 100 * np.linalg.norm(xi_est - xi[:, k]) \
-                                    / np.linalg.norm(xi[:, k])
+            # Save errors
+            rmse [i, j, k] = rmse_k
+            chi2m[i, j, k] = chi2m_k
 
-            # Value of chi-square
-            chi2 = np.linalg.norm(np.linalg.solve(l_xx, xm - x[:, k]))**2
+# Overall means
+rmse_overall  = np.sqrt(np.mean(rmse**2, axis=2))
+chi2m_overall = np.mean(chi2m, axis=2) 
 
-            # Outside of credible ellipsoid
-            if chi2 > chi2_max:
-                inside[i, j, k] = 100
-            else:
-                inside[i, j, k] = 0
+# Save mean values
+np.savetxt('tables/rmse.csv',  rmse_overall,  delimiter=',')
+np.savetxt('tables/chi2m.csv', chi2m_overall, delimiter=',')
 
-
-# Root-mean-square errors
-lam_rmse = np.sqrt(np.mean(lam_err**2, axis = 2))
-eta_rmse = np.sqrt(np.mean(eta_err**2, axis = 2))
-xi_rmse  = np.sqrt(np.mean(xi_err**2,  axis = 2))
-perc_out = np.mean(inside, axis = 2)
-
-#-------------------------------------------------------------------------------
-
-elmt = ['lam', 'eta', 'xi', 'cred']
-
-label = ['RMSE', 'RMSE (%)', 'RMSE (%)', \
-         'Percentage Outside of Credible Region']
-
-rmse = [lam_rmse, eta_rmse, xi_rmse, perc_out]
-
-perc = [False, True, True]
-
-for i in range(4):
-
-    plt.rc('font', size=10)
-
-    plt.figure(figsize = (6, 4))
-
-    plt.xscale('log')
-
-    heatmap = plt.pcolormesh(nq_vals, npass_vals, rmse[i])
-
-    colorbar = plt.colorbar(heatmap)
-
-    colorbar.set_label(label[i])
-    
-    plt.xlabel("Number of Mixture Components")
-    plt.ylabel("Number of Passes")
-
-    plt.xticks(nq_vals)
-    plt.yticks(npass_vals)
-
-    plt.tight_layout()
-    plt.savefig("plots/" + elmt[i] + "_err_npq.pdf")
-    plt.close()
+# Save tuning parameters
+np.savetxt('tables/npass.csv', np.array(npass_vals), delimiter=',')
+np.savetxt('tables/nq.csv',    np.array(nq_vals),    delimiter=',')

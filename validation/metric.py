@@ -141,11 +141,19 @@ for m in range(3):
     # Number of failures
     print('Number of Failures: ' + str(nfail))
 
-# Tabulate resulys
+# Column names
+col_rmse = r'$\varepsilon_\text{RMS}$'
+col_chi2 = r'$\overbar{\chi^2}$'
+
+# Tabulate results
 err_table = Table()
 err_table[' '] = methods
-err_table['RMSE (mas)'] = np.sqrt(np.nanmean(rmse**2, axis=1))
-err_table[r'Mean $\chi^2$'] = np.nanmean(chi2m, axis=1)
+err_table[col_rmse] = np.sqrt(np.nanmean(rmse**2, axis=1))
+err_table[col_chi2] = np.nanmean(chi2m, axis=1)
+
+# Number formatting
+err_table[col_rmse].format = '%.1f'
+err_table[col_chi2].format = '%.1f'
 
 # Save table
 ascii.write(err_table, 'tables/errs.tex', format='latex', overwrite=True) 
