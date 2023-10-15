@@ -181,6 +181,8 @@ def nexo_fit(fname, ref):
 
     #---------------------------------------------------------------------------
 
+    plt.rc('font', size=8)
+    
     data_file = 'data/ref_' + fname + '.csv'
 
     ref_table = ascii.read(data_file)
@@ -196,53 +198,43 @@ def nexo_fit(fname, ref):
 
     coe_max = [inf, 1, 180, 180, 360, inf, inf]
 
-    fig, axs = plt.subplots(2, 4)
+    fig, axs = plt.subplots(1, 7)
 
-    for j in range(2):
+    for i in range(7):
 
-        for k in range(4):
+        vals = ref_table[keys[i]]
 
-            i = 4 * j + k
+        x = ref
 
-            if (i < 7):
+        y = vals[1] 
 
-                vals = ref_table[keys[i]]
+        valerr = [[abs(vals[0]-y)], [abs(vals[2]-y)]]
 
-                x = ref
+        axs[i].errorbar(x, y, yerr=valerr, fmt='bo')
 
-                y = vals[1] 
+        vals = ci_table[keys[i]]
 
-                valerr = [[abs(vals[0]-y)], [abs(vals[2]-y)]]
+        x = 'NEXO'
 
-                axs[j, k].errorbar(x, y, yerr=valerr, fmt='bo')
+        y = vals[1] 
 
-                vals = ci_table[keys[i]]
+        valerr = [[abs(vals[0]-y)], [abs(vals[2]-y)]]
 
-                x = 'NEXO'
+        axs[i].errorbar(x, y, yerr=valerr, fmt='rs')
 
-                y = vals[1] 
+        axs[i].title.set_text(names[i])
 
-                valerr = [[abs(vals[0]-y)], [abs(vals[2]-y)]]
+        axs[i].tick_params('x', labelrotation=45)
 
-                axs[j, k].errorbar(x, y, yerr=valerr, fmt='rs')
+        ymin, ymax = axs[i].get_ylim()
 
-                axs[j, k].set(ylabel = names[i])
-        
-                axs[j, k].margins(0.5)
+        axs[i].set_ylim([max(ymin, coe_min[i]), min(ymax, coe_max[i])])
 
-                axs[j, k].tick_params('x', labelrotation=45)
+        axs[i].margins(0.5)
 
-                ymin, ymax = axs[j, k].get_ylim()
-
-                axs[j, k].set_ylim([max(ymin, coe_min[i]), min(ymax, coe_max[i])])
-
-            else:
-
-                axs[j, k].axis('off')
-
-    fig.set_size_inches(6, 8)
+    fig.set_size_inches(6, 3)
     fig.tight_layout()
-    plt.savefig('results/coe_' + fname + '.pdf')
+    plt.savefig('results/coe_' + fname + '_condensed.pdf')
 
 #-------------------------------------------------------------------------------
 
