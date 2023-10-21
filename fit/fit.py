@@ -9,6 +9,7 @@ from astropy.table import Table
 from astropy.time import Time
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from matplotlib.ticker import MaxNLocator
 
 import sys
@@ -178,6 +179,50 @@ def nexo_fit(fname, ref):
     fig.set_size_inches(6, 8)
     fig.tight_layout()
     plt.savefig('results/seppa_' + fname + '.pdf')
+
+    #---------------------------------------------------------------------------
+    
+    K = 1000
+
+    plt.rc('font', size=10)
+    
+    t_p = np.linspace(0, ci_per[1], K)
+
+    zm, cov_zz = nexo.predict_z(xm, l_xx, t_p-tref)
+
+    fig, axs = plt.subplots()
+
+    for k in range(K):
+
+        sig, V = np.linalg.eigh(cov_zz[:, :, k])
+
+        if k == 0:
+            lbl = r'$3 \sigma$ Region'
+
+        ellipse = patches.Ellipse(
+                xy = (zm[0, k], zm[1, k]),
+                width = 3 * np.sqrt(sig[1]),
+                height = 3 * np.sqrt(sig[0]),
+                angle = np.degrees(np.arctan2(V[1, 1], V[0, 1])),
+                facecolor='lightblue',
+                edgecolor=None
+                )
+
+        axs.add_patch(ellipse)
+
+    axs.plot(z[0, :], z[1, :], 'rs', label='Measurements')
+
+    axs.plot(zm[0, :], zm[1, :], 'b-', label='Mean Fit')
+
+    axs.plot(0, 0, 'y*')
+
+    axs.legend()
+
+    axs.set(xlabel='x (as)', ylabel='y (as)')
+
+    fig.set_size_inches(6, 6)
+    fig.tight_layout()
+    plt.savefig('results/orbit_' + fname + '.pdf')
 
     #---------------------------------------------------------------------------
 
