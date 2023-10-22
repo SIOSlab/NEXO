@@ -220,7 +220,8 @@ def nexo_fit(fname, ref):
 
     axs.set(xlabel='x (as)', ylabel='y (as)')
 
-    fig.set_size_inches(6, 6)
+    axs.set_aspect('equal', adjustable='box')
+
     fig.tight_layout()
     plt.savefig('results/orbit_' + fname + '.pdf')
 
