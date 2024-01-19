@@ -183,105 +183,81 @@ subroutine run_filter(ns, nm, np, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
     integer, intent(out) :: info
 
     ! Local variables
-    integer :: j, k
-    real(8), dimension(1) :: z_pm, var_w_pm
-    real(8), dimension(2, 2, nm) :: cov_ww_s
+    integer :: i, j, k
+    real(8) :: z_pm, var_w_pm
+    real(8), dimension(2*nm+1) :: zb
+    real(8), dimension(2*nm+1, 2*nm+1) :: cov_ww_b
 
     ! Parallax & mass measurement
-    z_pm(1) = log(mm) + 3 * log(pxm) 
+    z_pm = log(mm) + 3 * log(pxm) 
 
     ! Error variance for z_pm
-    var_w_pm(1) = ((std_m / mm)**2 + (3 * std_px / pxm)**2)
+    var_w_pm = ((std_m / mm)**2 + (3 * std_px / pxm)**2)
 
-    ! Scaled measurement covariance
-    cov_ww_s = cov_ww
+    ! Combined batch measurement
+    zb(1:(2*nm):2) = z(1, :)
+    zb(2:(2*nm):2) = z(2, :)
+    zb(2*nm+1)     = z_pm
+
+    ! Combined batch covariance
+    cov_ww_b = 0.0D0
+    do k = 1, nm
+        j = 2*k
+        i = j-1
+        cov_ww_b(i:j, i:j) = cov_ww(:, :, k)
+    end do
+    cov_ww_b(2*nm+1, 2*nm+1) = var_w_pm
 
     ! Priors
     xm     = xm_p
     l_xx   = l_xx_p
     loglik = loglik_p
-
-    ! Iterate over filter passes
-    do j = 1, np
-
-        ! Iterate over measurements
-        do k = 1, nm
     
-            ! Filter update with astrometry
-            call srspf_update(h_z, 7, 2, ns, xs, w, t(k), z(1, k), &
-                    cov_ww_s(1, 1, k), xm, l_xx, loglik, info)
-
-            ! Stop if filter failed
-            if (info /= 0) return
-
-        end do
-   
-        ! Filter update with parallax & mass
-        call srspf_update(h_z_pm, 7, 1, ns, xs, w, t(k), z_pm, var_w_pm, &
-                xm, l_xx, loglik, info)
-
-        ! Stop if filter failed
-        if (info /= 0) return
-
-    end do
+    ! Filter update
+    call srspf_update(hb, 7, 2*nm+1, ns, xs, w, zb, cov_ww_b, xm, l_xx, &
+        loglik, info)
 
     contains
 
-        subroutine h_z(nx, nz, ns, t, x, z, ok)
-
+        subroutine hb(nx, nz, ns, x, zb, ok)
+        
             implicit none
 
             ! Inputs
             integer, intent(in) :: nx, nz, ns
-            real(8), intent(in) :: t
             real(8), intent(in), dimension(nx, ns) :: x
 
             ! Outputs
-            real(8), intent(out), dimension(nz, ns) :: z
+            real(8), intent(out), dimension(nz, ns) :: zb
             logical, intent(out), dimension(ns) :: ok
 
             ! Local variables
             real(8), dimension(ns) :: lam
             real(8), dimension(2, ns) :: eta
             real(8), dimension(4, ns) :: xi
-            real(8), dimension(1) :: ta
+            real(8), dimension(2, ns, nm) :: z
+            real(8), dimension(ns) :: zpm
+            logical, dimension(ns, nm) :: ok_z
+            logical, dimension(ns) :: ok_zpm
 
             ! Nonsingular parameters
             lam = x(1,   :)
             eta = x(2:3, :)
             xi  = x(4:7, :)
-
-            ! Time as array
-            ta(1) = t
-
+            
             ! Compute z values
-            call eval_z(ns, 1, lam, eta, xi, ta, z, ok)
+            call eval_z(ns, nm, lam, eta, xi, t, z, ok_z)
 
-        end subroutine
-        
-        subroutine h_z_pm(nx, nz, ns, t, x, z, ok)
+            ! Compute z_pm values
+            call eval_z_pm(ns, lam, xi, zpm, ok_zpm)
+            
+            ! Combine batch measurements
+            zb(1:(2*nm):2, :) = transpose(z(1, :, :))
+            zb(2:(2*nm):2, :) = transpose(z(2, :, :))
+            zb(2*nm+1,     :) = zpm
 
-            implicit none
-
-            ! Inputs
-            integer, intent(in) :: nx, nz, ns
-            real(8), intent(in) :: t
-            real(8), intent(in), dimension(nx, ns) :: x
-
-            ! Outputs
-            real(8), intent(out), dimension(nz, ns) :: z
-            logical, intent(out), dimension(ns) :: ok
-
-            ! Local variables
-            real(8), dimension(ns) :: lam
-            real(8), dimension(4, ns) :: xi
-
-            ! Nonsingular parameters
-            lam = x(1,   :)
-            xi  = x(4:7, :)
-
-            ! Compute z values
-            call eval_z_pm(ns, lam, xi, z, ok)
+            ! Check combined measurements
+            ok = all(ok_z, 2) .and. ok_zpm
 
         end subroutine
 

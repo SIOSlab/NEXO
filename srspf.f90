@@ -1,13 +1,12 @@
-subroutine srspf_update(h, nx, nz, ns, xs, w, t, z_tru, cov_ww, &
+subroutine srspf_update(h, nx, nz, ns, xs, w, z_tru, cov_ww, &
         xm, l_xx, loglik, info)
 
     implicit none
 
     ! Interface for measurement function
     interface
-        subroutine h(nx, nz, ns, t, x, z, ok)
+        subroutine h(nx, nz, ns, x, z, ok)
             integer, intent(in) :: nx, nz, ns
-            real(8), intent(in) :: t
             real(8), intent(in), dimension(nx, ns) :: x
             real(8), intent(out), dimension(nz, ns) :: z
             logical, intent(out), dimension(ns) :: ok
@@ -18,7 +17,6 @@ subroutine srspf_update(h, nx, nz, ns, xs, w, t, z_tru, cov_ww, &
     integer, intent(in) :: nx, nz, ns
     real(8), intent(in), dimension(nx, ns) :: xs
     real(8), intent(in), dimension(ns) :: w
-    real(8), intent(in) :: t
     real(8), intent(in), dimension(nz) :: z_tru
     real(8), intent(in), dimension(nz, nz) :: cov_ww
 
@@ -50,7 +48,7 @@ subroutine srspf_update(h, nx, nz, ns, xs, w, t, z_tru, cov_ww, &
     x = xc + spread(xm, 2, ns)
 
     ! Predicted measurements
-    call h(nx, nz, ns, t, x, z, ok)
+    call h(nx, nz, ns, x, z, ok)
         
     ! Stop if too few good points
     if (count(ok) < nx + 1) then
