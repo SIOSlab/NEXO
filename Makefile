@@ -3,7 +3,7 @@ f_files := $(wildcard *.f90)
 all: nexo_lib nexo_py
 
 nexo_lib: $(f_files)
-	gfortran -c *.f90 -Wall -std=f2008 -g -O3 -fPIC
+	gfortran -c nexo.f90 -Wall -std=f2008 -g -O3 -fPIC
 	ar rcs nexo.a *.o
 	rm *.o
 

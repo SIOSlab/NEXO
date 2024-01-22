@@ -20,20 +20,23 @@ import nexo
 
 nq = 1000
 
-min_per = 0.1
+nr = 100
 
-max_per = 10000
+lamm = 2.1
 
-std_lam = 0.5
-
+std_lam = 2.3
 std_eta = 0.15
+std_xi  = 8.1 
 
-npass = 2
+seed = [4, 5, 6, 7]
 
 #-------------------------------------------------------------------------------
 
 # Mean parallax (mas)
 plxm = 100
+
+# Scaled standard deviation of xi
+std_xi = plxm * std_xi
 
 # Standard deviation of parallax (mas)
 std_plx = 0.1
@@ -64,7 +67,7 @@ ref_epoch = 58849.0
 conf = 0.95
 
 # Fit one orbit
-def fit_orbit(j):
+def fit_orbit(j, seed):
 
     # Print status
     print('Running case ' + str(j+1) + ' of ' + str(norb))
@@ -84,8 +87,8 @@ def fit_orbit(j):
             meas_table['radec_corr'])
 
     # Run filter
-    xm, l_xx = nexo.mix_filter(npass, nq, plxm, std_plx, mm, std_m, \
-            min_per, max_per, std_lam, std_eta, t, z, cov_ww)
+    xm, l_xx, seed = nexo.mix_filter(nq, nr, plxm, std_plx, mm, std_m, lamm, \
+            std_lam, std_eta, std_xi, t, z, cov_ww, seed)
 
     # Compute confidence intervals
     ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp = \
@@ -108,8 +111,11 @@ def fit_orbit(j):
     # Save run time
     np.savetxt('results/NEXO_trun_' + str(j+1) + '.csv', np.full(1, trun))
 
+    # Return seed
+    return seed
+
 # Run tests
 for j in range(norb):
-    fit_orbit(j)
+    seed = fit_orbit(j, seed)
 
 #Parallel(n_jobs=os.cpu_count())(delayed(fit_orbit)(j) for j in range(norb))

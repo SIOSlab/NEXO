@@ -159,13 +159,13 @@ subroutine eval_z_pm(ns, lam, xi, z, ok)
 
 end subroutine
 
-subroutine run_filter(ns, nm, np, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
+subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
         xm_p, l_xx_p, loglik_p, xm, l_xx, loglik, info)
 
     implicit none
 
     ! Inputs
-    integer, intent(in) :: ns, nm, np
+    integer, intent(in) :: ns, nm
     real(8), intent(in), dimension(7, ns) :: xs 
     real(8), intent(in), dimension(ns) :: w
     real(8), intent(in) :: pxm, std_px, mm, std_m
@@ -263,30 +263,29 @@ subroutine run_filter(ns, nm, np, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
 
 end subroutine
 
-subroutine mix_filter(nm, np, nq, pxm, std_px, mm, std_m, min_per, max_per, &
-        std_lam, std_eta, t, z, cov_ww, xm, l_xx)
+subroutine mix_filter(nm, nq, nr, pxm, std_px, mm, std_m, lamm, &
+        std_lam, std_eta, std_xi, t, z, cov_ww, seed_in, xm, l_xx, seed_out)
 
     implicit none
 
     ! Inputs
-    integer, intent(in) :: nm, np, nq
-    real(8), intent(in) :: pxm, std_px, mm, std_m, min_per, max_per, &
-        std_lam, std_eta
+    integer, intent(in) :: nm, nq, nr
+    real(8), intent(in) :: pxm, std_px, mm, std_m, lamm, std_lam, std_eta, std_xi
     real(8), intent(in), dimension(nm) :: t
     real(8), intent(in), dimension(2, nm) :: z
     real(8), intent(in), dimension(2, 2, nm) :: cov_ww
+    integer, intent(in), dimension(4) :: seed_in
 
     ! Outputs
     real(8), intent(out), dimension(7) :: xm
     real(8), intent(out), dimension(7, 7) :: l_xx
+    integer, intent(out), dimension(4) :: seed_out
 
     ! Local variables
-    integer :: ns, j, info, qkind
-    real(8) :: a, b, alpha, beta, std_xi
-    real(8), dimension(nq) :: q_lam, w_lam, loglik_p, loglik, w_mix, v
-    real(8), dimension(7) :: xm_p
+    integer :: ns, j, info
+    real(8), dimension(nq) :: loglik_p, loglik, w_mix, v
+    real(8), dimension(7, nq) :: xm_p, xm_q
     real(8), dimension(7, 7) :: l_xx_p
-    real(8), dimension(7, nq) :: xm_q
     real(8), dimension(7, 7, nq) :: l_xx_q
     real(8), dimension(7, 8, nq) :: ps, work
     real(8), dimension(7) :: tau
@@ -308,33 +307,40 @@ subroutine mix_filter(nm, np, nq, pxm, std_px, mm, std_m, min_per, max_per, &
     ! Normalize cubature weights
     w = w / sum(w)
 
-    ! Quadrature points for lambda
-    qkind = 1
-    a     = log(min_per)
-    b     = log(max_per)
-    alpha = 0
-    beta  = 0
-    call cgqf(nq, qkind, alpha, beta, a, b, q_lam, w_lam)
+    ! Prior covariance
+    l_xx_p = 0.0D0
+    l_xx_p(1, 1) = std_lam
+    l_xx_p(2, 2) = std_eta
+    l_xx_p(3, 3) = std_eta
+    l_xx_p(4, 4) = std_xi
+    l_xx_p(5, 5) = std_xi
+    l_xx_p(6, 6) = std_xi
+    l_xx_p(7, 7) = std_xi
+
+    ! Set seed
+    seed_out = seed_in
+
+    ! Normalized prior component means
+    call dlarnv(3, seed_out, 7*nq, xm_p)
+
+    ! Centralized prior component means
+    xm_p = l_xx_p * xm_p
+
+    ! Non-central prior component means
+    xm_p(1, :) = xm_p(1, :) + lamm
+
+    ! Scale prior covariance
+    l_xx_p = l_xx_p / nr
 
     ! Prior log-likelihoods
-    loglik_p = log(w_lam)
+    loglik_p = 0.0D0
 
-    ! Iterate over lambda values
+    ! Iterate over mixture components
     do j = 1, nq
 
-        ! Prior standard deviation of xi
-        std_xi = pxm * mm**(1.0D0 / 3.0D0) * &
-                    exp(2*q_lam(j)/3 + 4*std_lam**2/9) / sqrt(3.0D0)
-
-        ! Prior mean & covariance
-        call gen_prior(std_lam, std_eta, std_xi, xm_p, l_xx_p)
-
-        ! Set prior mean for lambda
-        xm_p(1) = q_lam(j)
-
         ! Run filter
-        call run_filter(ns, nm, np, xs, w, pxm, std_px, mm, std_m, &
-            t, z, cov_ww, xm_p, l_xx_p, loglik_p(j), &
+        call run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, &
+            t, z, cov_ww, xm_p(1, j), l_xx_p, loglik_p(j), &
             xm_q(1, j), l_xx_q(1, 1, j), loglik(j), info)
 
         ! Check whether filter was successful
