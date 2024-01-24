@@ -240,12 +240,12 @@ subroutine run_filter(ns, nm, xs, w, t, z, cov_ww, &
 
 end subroutine
 
-subroutine mix_filter(nm, nq, xm_p, t, z, cov_ww, xm, l_xx)
+subroutine mix_filter(nm, nq, nr, xm_p, t, z, cov_ww, xm, l_xx)
 
     implicit none
 
     ! Inputs
-    integer, intent(in) :: nm, nq
+    integer, intent(in) :: nm, nq, nr
     real(8), intent(in), dimension(7, nq) :: xm_p
     real(8), intent(in), dimension(nm) :: t
     real(8), intent(in), dimension(2, nm) :: z
@@ -285,7 +285,7 @@ subroutine mix_filter(nm, nq, xm_p, t, z, cov_ww, xm, l_xx)
     loglik_p = 0.0D0
 
     ! Prior square root of covariance
-    l_xx_p = xm_p / nq
+    l_xx_p = (xm_p - spread(sum(xm_p / nq, 2), 2, nq)) / sqrt(1.0D0 * nq * nr)
     call dgelqf(7, nq, l_xx_p, 7, tau, work, 56*nq, info)
     if (info /= 0) stop 'mix_filter: LQ decomposition failed!'
     

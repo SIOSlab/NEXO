@@ -22,6 +22,8 @@ import priors
 
 nq = 2000
 
+nr = 100
+
 #-------------------------------------------------------------------------------
 
 # Mean parallax (mas)
@@ -79,7 +81,7 @@ def fit_orbit(j, seed):
     xsamp = priors.nexo_priors(nq, seed, mm, std_m, plxm, std_plx)
 
     # Run filter
-    xm, l_xx = nexo.mix_filter(xsamp, t, z, cov_ww)
+    xm, l_xx = nexo.mix_filter(nr, xsamp, t, z, cov_ww)
 
     # Compute confidence intervals
     ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp = \
