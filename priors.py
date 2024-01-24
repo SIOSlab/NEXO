@@ -6,81 +6,68 @@ from EXOSIMS.PlanetPopulation.KeplerLike1 import KeplerLike1
 
 import nexo
 
-#-------------------------------------------------------------------------------
+def nexo_priors(norb, seed, mm, std_m, plxm, std_plx):
 
-# Random generator seed
-np.random.seed(707)
+    # Random generator seed
+    np.random.seed(seed)
 
-# Number of orbits
-norb = 10000
+    #-------------------------------------------------------------------------------
 
-# Star mass (solar masses)
-mstar = 1.0
+    # Specs
+    specs = {}
+    specs["modules"] = {}
+    specs["modules"]["PlanetPhysicalModel"] = " "
 
-# Mean parallax (mas)
-plxm = 1
+    # Set up planet population model
+    pop = KeplerLike1(**specs)
 
-# Standard deviation of parallax (mas)
-std_plx = 0
+    # Generate planet parameters
+    a, e, p, rp = pop.gen_plan_params(norb)
 
-#-------------------------------------------------------------------------------
+    # Planet mass (solar masses)
+    mp = pop.PlanetPhysicalModel.calc_mass_from_radius(rp).to("solMass").value
 
-# Specs
-specs = {}
-specs["modules"] = {}
-specs["modules"]["PlanetPhysicalModel"] = " "
+    # Total mass (solar masses) - assuming 1 solar mass for star
+    mtot = np.random.normal(mm, std_m, norb) + mp 
 
-# Set up planet population model
-pop = KeplerLike1(**specs)
+    # Semi-major axes
+    sma = a.value
 
-# Generate planet parameters
-a, e, p, rp = pop.gen_plan_params(norb)
+    # Eccentricities
+    ecc = e
 
-# Planet mass (solar masses)
-mp = pop.PlanetPhysicalModel.calc_mass_from_radius(rp).to("solMass").value
+    # Inclinations (uniform cosine)
+    inc = np.degrees(np.arccos(np.random.uniform(-1.0, 1.0, norb)))
 
-# Total mass (solar masses) - assuming 1 solar mass for star
-mtot = mstar + mp 
+    # Longitudes of ascending nodes (uniform circular)
+    lan = np.random.uniform(0.0, 180.0, norb)
 
-# Semi-major axes
-sma = a.value
+    # Arguments of periapsis (uniform circular)
+    aop = np.random.uniform(0.0, 360.0, norb)
 
-# Eccentricities
-ecc = e
+    # Mean anomalies at epoch (uniform circular)
+    mae = np.random.uniform(0.0, 360.0, norb)
 
-# Inclinations (uniform cosine)
-inc = np.degrees(np.arccos(np.random.uniform(-1.0, 1.0, norb)))
+    # Periods
+    per = np.sqrt(sma**3 / mtot) 
 
-# Longitudes of ascending nodes (uniform circular)
-lan = np.random.uniform(0.0, 180.0, norb)
+    # Parallaxes
+    plx = np.random.normal(plxm, std_plx, norb)
 
-# Arguments of periapsis (uniform circular)
-aop = np.random.uniform(0.0, 360.0, norb)
+    #-------------------------------------------------------------------------------
 
-# Mean anomalies at epoch (uniform circular)
-mae = np.random.uniform(0.0, 360.0, norb)
+    # Nonsingular elements
+    lam, eta, xi = nexo.coe2nse(plx, sma, ecc, inc, lan, aop, mae, per)
 
-# Periods
-per = np.sqrt(sma**3 / mtot) 
+    # Combined states
+    x = np.empty((7, norb))
+    x[0, :] = lam
+    x[1, :] = eta[0, :]
+    x[2, :] = eta[1, :]
+    x[3, :] = xi[0, 0, :]
+    x[4, :] = xi[1, 0, :]
+    x[5, :] = xi[0, 1, :]
+    x[6, :] = xi[1, 1, :]
 
-# Parallaxes
-plx = np.random.normal(plxm, std_plx, norb)
-
-#-------------------------------------------------------------------------------
-
-# Nonsingular elements
-lam, eta, xi = nexo.coe2nse(plx, sma, ecc, inc, lan, aop, mae, per)
-
-# Mean of lambda
-lamm = np.mean(lam)
-
-# Standard deviations
-std_lam = np.std(lam)
-std_eta = np.sqrt(np.mean(eta**2))
-std_xi  = np.sqrt(np.mean(xi**2))
-
-# Display results
-print("lamm    = " + str(lamm))
-print("std_lam = " + str(std_lam))
-print("std_eta = " + str(std_eta))
-print("std_xi  = " + str(std_xi))
+    # Return states
+    return x

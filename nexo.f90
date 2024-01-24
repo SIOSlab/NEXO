@@ -159,7 +159,7 @@ subroutine eval_z_pm(ns, lam, xi, z, ok)
 
 end subroutine
 
-subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
+subroutine run_filter(ns, nm, xs, w, t, z, cov_ww, &
         xm_p, l_xx_p, loglik_p, xm, l_xx, loglik, info)
 
     implicit none
@@ -168,7 +168,6 @@ subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
     integer, intent(in) :: ns, nm
     real(8), intent(in), dimension(7, ns) :: xs 
     real(8), intent(in), dimension(ns) :: w
-    real(8), intent(in) :: pxm, std_px, mm, std_m
     real(8), intent(in), dimension(nm) :: t
     real(8), intent(in), dimension(2, nm) :: z
     real(8), intent(in), dimension(2, 2, nm) :: cov_ww
@@ -183,30 +182,14 @@ subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
     integer, intent(out) :: info
 
     ! Local variables
-    integer :: i, j, k
-    real(8) :: z_pm, var_w_pm
-    real(8), dimension(2*nm+1) :: zb
-    real(8), dimension(2*nm+1, 2*nm+1) :: cov_ww_b
-
-    ! Parallax & mass measurement
-    z_pm = log(mm) + 3 * log(pxm) 
-
-    ! Error variance for z_pm
-    var_w_pm = ((std_m / mm)**2 + (3 * std_px / pxm)**2)
-
-    ! Combined batch measurement
-    zb(1:(2*nm):2) = z(1, :)
-    zb(2:(2*nm):2) = z(2, :)
-    zb(2*nm+1)     = z_pm
+    integer :: k
+    real(8), dimension(2, nm, 2, nm) :: cov_ww_b
 
     ! Combined batch covariance
     cov_ww_b = 0.0D0
     do k = 1, nm
-        j = 2*k
-        i = j-1
-        cov_ww_b(i:j, i:j) = cov_ww(:, :, k)
+        cov_ww_b(:, k, :, k) = cov_ww(:, :, k)
     end do
-    cov_ww_b(2*nm+1, 2*nm+1) = var_w_pm
 
     ! Priors
     xm     = xm_p
@@ -214,12 +197,12 @@ subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
     loglik = loglik_p
     
     ! Filter update
-    call srspf_update(hb, 7, 2*nm+1, ns, xs, w, zb, cov_ww_b, xm, l_xx, &
+    call srspf_update(h, 7, 2*nm, ns, xs, w, z, cov_ww_b, xm, l_xx, &
         loglik, info)
 
     contains
 
-        subroutine hb(nx, nz, ns, x, zb, ok)
+        subroutine h(nx, nz, ns, x, z, ok)
         
             implicit none
 
@@ -228,17 +211,15 @@ subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
             real(8), intent(in), dimension(nx, ns) :: x
 
             ! Outputs
-            real(8), intent(out), dimension(nz, ns) :: zb
+            real(8), intent(out), dimension(nz, ns) :: z
             logical, intent(out), dimension(ns) :: ok
 
             ! Local variables
             real(8), dimension(ns) :: lam
             real(8), dimension(2, ns) :: eta
             real(8), dimension(4, ns) :: xi
-            real(8), dimension(2, ns, nm) :: z
-            real(8), dimension(ns) :: zpm
-            logical, dimension(ns, nm) :: ok_z
-            logical, dimension(ns) :: ok_zpm
+            real(8), dimension(2, ns, nm) :: z_k
+            logical, dimension(ns, nm) :: ok_k
 
             ! Nonsingular parameters
             lam = x(1,   :)
@@ -246,46 +227,39 @@ subroutine run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, t, z, cov_ww, &
             xi  = x(4:7, :)
             
             ! Compute z values
-            call eval_z(ns, nm, lam, eta, xi, t, z, ok_z)
-
-            ! Compute z_pm values
-            call eval_z_pm(ns, lam, xi, zpm, ok_zpm)
+            call eval_z(ns, nm, lam, eta, xi, t, z_k, ok_k)
             
             ! Combine batch measurements
-            zb(1:(2*nm):2, :) = transpose(z(1, :, :))
-            zb(2:(2*nm):2, :) = transpose(z(2, :, :))
-            zb(2*nm+1,     :) = zpm
+            z(1:(2*nm):2, :) = transpose(z_k(1, :, :))
+            z(2:(2*nm):2, :) = transpose(z_k(2, :, :))
 
             ! Check combined measurements
-            ok = all(ok_z, 2) .and. ok_zpm
+            ok = all(ok_k, 2)
 
         end subroutine
 
 end subroutine
 
-subroutine mix_filter(nm, nq, nr, pxm, std_px, mm, std_m, lamm, &
-        std_lam, std_eta, std_xi, t, z, cov_ww, seed_in, xm, l_xx, seed_out)
+subroutine mix_filter(nm, nq, xm_p, t, z, cov_ww, xm, l_xx)
 
     implicit none
 
     ! Inputs
-    integer, intent(in) :: nm, nq, nr
-    real(8), intent(in) :: pxm, std_px, mm, std_m, lamm, std_lam, std_eta, std_xi
+    integer, intent(in) :: nm, nq
+    real(8), intent(in), dimension(7, nq) :: xm_p
     real(8), intent(in), dimension(nm) :: t
     real(8), intent(in), dimension(2, nm) :: z
     real(8), intent(in), dimension(2, 2, nm) :: cov_ww
-    integer, intent(in), dimension(4) :: seed_in
 
     ! Outputs
     real(8), intent(out), dimension(7) :: xm
     real(8), intent(out), dimension(7, 7) :: l_xx
-    integer, intent(out), dimension(4) :: seed_out
 
     ! Local variables
     integer :: ns, j, info
     real(8), dimension(nq) :: loglik_p, loglik, w_mix, v
-    real(8), dimension(7, nq) :: xm_p, xm_q
-    real(8), dimension(7, 7) :: l_xx_p
+    real(8), dimension(7, nq) :: l_xx_p
+    real(8), dimension(7, nq) :: xm_q
     real(8), dimension(7, 7, nq) :: l_xx_q
     real(8), dimension(7, 8, nq) :: ps, work
     real(8), dimension(7) :: tau
@@ -307,39 +281,19 @@ subroutine mix_filter(nm, nq, nr, pxm, std_px, mm, std_m, lamm, &
     ! Normalize cubature weights
     w = w / sum(w)
 
-    ! Prior covariance
-    l_xx_p = 0.0D0
-    l_xx_p(1, 1) = std_lam
-    l_xx_p(2, 2) = std_eta
-    l_xx_p(3, 3) = std_eta
-    l_xx_p(4, 4) = std_xi
-    l_xx_p(5, 5) = std_xi
-    l_xx_p(6, 6) = std_xi
-    l_xx_p(7, 7) = std_xi
-
-    ! Set seed
-    seed_out = seed_in
-
-    ! Normalized prior component means
-    call dlarnv(3, seed_out, 7*nq, xm_p)
-
-    ! Centralized prior component means
-    xm_p = l_xx_p * xm_p
-
-    ! Non-central prior component means
-    xm_p(1, :) = xm_p(1, :) + lamm
-
-    ! Scale prior covariance
-    l_xx_p = l_xx_p / nr
-
     ! Prior log-likelihoods
     loglik_p = 0.0D0
 
+    ! Prior square root of covariance
+    l_xx_p = xm_p / nq
+    call dgelqf(7, nq, l_xx_p, 7, tau, work, 56*nq, info)
+    if (info /= 0) stop 'mix_filter: LQ decomposition failed!'
+    
     ! Iterate over mixture components
     do j = 1, nq
 
         ! Run filter
-        call run_filter(ns, nm, xs, w, pxm, std_px, mm, std_m, &
+        call run_filter(ns, nm, xs, w, &
             t, z, cov_ww, xm_p(1, j), l_xx_p, loglik_p(j), &
             xm_q(1, j), l_xx_q(1, 1, j), loglik(j), info)
 

@@ -16,27 +16,16 @@ sys.path.append('..')
 
 import nexo
 
+import priors
+
 #-------------------------------------------------------------------------------
 
-nq = 1000
-
-nr = 100
-
-lamm = 2.1
-
-std_lam = 2.3
-std_eta = 0.15
-std_xi  = 8.1 
-
-seed = [4, 5, 6, 7]
+nq = 2000
 
 #-------------------------------------------------------------------------------
 
 # Mean parallax (mas)
 plxm = 100
-
-# Scaled standard deviation of xi
-std_xi = plxm * std_xi
 
 # Standard deviation of parallax (mas)
 std_plx = 0.1
@@ -86,9 +75,11 @@ def fit_orbit(j, seed):
             meas_table['raoff_err'], meas_table['decoff_err'], \
             meas_table['radec_corr'])
 
+    # Prior sample
+    xsamp = priors.nexo_priors(nq, seed, mm, std_m, plxm, std_plx)
+
     # Run filter
-    xm, l_xx, seed = nexo.mix_filter(nq, nr, plxm, std_plx, mm, std_m, lamm, \
-            std_lam, std_eta, std_xi, t, z, cov_ww, seed)
+    xm, l_xx = nexo.mix_filter(xsamp, t, z, cov_ww)
 
     # Compute confidence intervals
     ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp = \
@@ -116,6 +107,6 @@ def fit_orbit(j, seed):
 
 # Run tests
 for j in range(norb):
-    seed = fit_orbit(j, seed)
+    seed = fit_orbit(j, j)
 
 #Parallel(n_jobs=os.cpu_count())(delayed(fit_orbit)(j) for j in range(norb))
