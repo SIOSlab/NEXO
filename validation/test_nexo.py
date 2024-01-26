@@ -26,6 +26,9 @@ nr = 100
 
 #-------------------------------------------------------------------------------
 
+# Random generator seed
+np.random.seed(909)
+
 # Mean parallax (mas)
 plxm = 100
 
@@ -58,7 +61,7 @@ ref_epoch = 58849.0
 conf = 0.95
 
 # Fit one orbit
-def fit_orbit(j, seed):
+def fit_orbit(j):
 
     # Print status
     print('Running case ' + str(j+1) + ' of ' + str(norb))
@@ -78,7 +81,7 @@ def fit_orbit(j, seed):
             meas_table['radec_corr'])
 
     # Prior sample
-    xsamp = priors.nexo_priors(nq, seed, mm, std_m, plxm, std_plx)
+    xsamp = priors.nexo_priors(nq, mm, std_m, plxm, std_plx)
 
     # Run filter
     xm, l_xx = nexo.mix_filter(nr, xsamp, t, z, cov_ww)
@@ -104,11 +107,8 @@ def fit_orbit(j, seed):
     # Save run time
     np.savetxt('results/NEXO_trun_' + str(j+1) + '.csv', np.full(1, trun))
 
-    # Return seed
-    return seed
-
 # Run tests
 for j in range(norb):
-    seed = fit_orbit(j, j)
+    fit_orbit(j)
 
 #Parallel(n_jobs=os.cpu_count())(delayed(fit_orbit)(j) for j in range(norb))

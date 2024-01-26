@@ -6,12 +6,7 @@ from EXOSIMS.PlanetPopulation.KeplerLike1 import KeplerLike1
 
 import nexo
 
-def nexo_priors(norb, seed, mm, std_m, plxm, std_plx):
-
-    # Random generator seed
-    np.random.seed(seed)
-
-    #-------------------------------------------------------------------------------
+def nexo_priors(norb, mm, std_m, plxm, std_plx):
 
     # Specs
     specs = {}
