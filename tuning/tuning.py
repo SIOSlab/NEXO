@@ -16,19 +16,13 @@ sys.path.append('..')
 
 import nexo
 
+import priors
+
 #-------------------------------------------------------------------------------
 
-nq_vals = [1, 2, 5, 10, 20, 50, 100, 500, 1000, 2000]
+nq_vals = [1000, 2000, 5000, 10000]
 
-npass_vals = [1, 2, 3, 4, 5]
-
-min_per = 0.1
-
-max_per = 10000
-
-std_lam = 0.5
-
-std_eta = 0.15
+nr_vals = [100, 200, 500, 1000]
 
 #-------------------------------------------------------------------------------
 
@@ -65,25 +59,25 @@ tf = 10.0
 #-------------------------------------------------------------------------------
 
 # Arrays
-err_dim = (len(npass_vals), len(nq_vals), norb)
+err_dim = (len(nq_vals), len(nr_vals), norb)
 rmse    = np.empty(err_dim)
 chi2m   = np.empty(err_dim)
 
-# Iterate over number of passes
-for i in range(len(npass_vals)):
+# Iterate over number of components
+for i in range(len(nq_vals)):
 
-    # Number of passes
-    npass = npass_vals[i]
+    # Number of components
+    nq = nq_vals[i]
 
-    # Iterate over number of components
-    for j in range(len(nq_vals)):
+    # Iterate over scaling factor
+    for j in range(len(nr_vals)):
 
-        # Number of components
-        nq = nq_vals[j]
+        # Scaling factor
+        nr = nr_vals[j]
 
         # Print status
         print('---------------------------------------------------------------')
-        print(str(npass) + ' passes; ' + str(nq) + ' mixture components')
+        print('nq = ' + str(nq) + '; nr = ' + str(nr)                          )
         print('---------------------------------------------------------------')
 
         # Iterate over orbits
@@ -107,30 +101,32 @@ for i in range(len(npass_vals)):
                 meas_table['radec_corr']
                 )
 
+            # Prior sample
+            xsamp = priors.nexo_priors(nq, mm, std_m, plxm, std_plx)
+
             # Run filter
-            xm, l_xx = nexo.mix_filter(npass, nq, plxm, std_plx, mm, std_m, \
-                    min_per, max_per, std_lam, std_eta, t, z, cov_ww)
+            xm, l_xx = nexo.mix_filter(nr, xsamp, t, z, cov_ww)
 
             # Compute errors
             rmse_k, chi2m_k, ok = nexo.eval_err_srspf(lam[k], eta[:, k], Xi[:, :, k], \
                                         xm, l_xx, ti, tf)
             # Stop if error in error
             if (not ok):
-                print('Error calculation failed!')
-                exit()
+                rmse_k  = np.NAN
+                chi2m_k = np.NAN
 
             # Save errors
             rmse [i, j, k] = rmse_k
             chi2m[i, j, k] = chi2m_k
 
 # Overall means
-rmse_overall  = np.sqrt(np.mean(rmse**2, axis=2))
-chi2m_overall = np.mean(chi2m, axis=2) 
+rmse_overall  = np.sqrt(np.nanmean(rmse**2, axis=2))
+chi2m_overall = np.nanmean(chi2m, axis=2) 
 
 # Save mean values
 np.savetxt('tables/rmse.csv',  rmse_overall,  delimiter=',')
 np.savetxt('tables/chi2m.csv', chi2m_overall, delimiter=',')
 
 # Save tuning parameters
-np.savetxt('tables/npass.csv', np.array(npass_vals), delimiter=',')
-np.savetxt('tables/nq.csv',    np.array(nq_vals),    delimiter=',')
+np.savetxt('tables/nq.csv', np.array(nq_vals), delimiter=',')
+np.savetxt('tables/nr.csv', np.array(nr_vals), delimiter=',')

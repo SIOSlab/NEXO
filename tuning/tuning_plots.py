@@ -8,8 +8,8 @@ from astropy.table import Table
 
 rmse  = np.genfromtxt('tables/rmse.csv',  delimiter=',')
 chi2m = np.genfromtxt('tables/chi2m.csv', delimiter=',')
-npass = np.genfromtxt('tables/npass.csv', delimiter=',')
-nq    = np.genfromtxt('tables/nq.csv',    delimiter=',')
+nq    = np.genfromtxt('tables/nq.csv', delimiter=',')
+nr    = np.genfromtxt('tables/nr.csv',    delimiter=',')
 
 name = ['rmse', 'chi2m']
 
@@ -24,19 +24,19 @@ for i in range(2):
     plt.figure(figsize = (6, 4))
 
     plt.xscale('log')
+    plt.yscale('log')
 
-    heatmap = plt.pcolormesh(nq, npass, val[i], \
-                norm=colors.LogNorm(val[i].min(), val[i].max()))
+    heatmap = plt.pcolormesh(nq, nr, np.transpose(val[i]))
 
     colorbar = plt.colorbar(heatmap)
 
     colorbar.set_label(label[i])
     
     plt.xlabel("Number of Mixture Components")
-    plt.ylabel("Number of Passes")
+    plt.ylabel("Scaling Factor")
 
     plt.xticks(nq)
-    plt.yticks(npass)
+    plt.yticks(nr)
 
     plt.tight_layout()
     plt.savefig("plots/" + name[i] + "_npq.pdf")
