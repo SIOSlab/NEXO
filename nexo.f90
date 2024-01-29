@@ -240,13 +240,15 @@ subroutine run_filter(ns, nm, xs, w, t, z, cov_ww, &
 
 end subroutine
 
-subroutine mix_filter(nm, nq, nr, xm_p, t, z, cov_ww, xm, l_xx)
+subroutine mix_filter(nm, nq, wgt_p, xm_p, l_xx_p, t, z, cov_ww, xm, l_xx)
 
     implicit none
 
     ! Inputs
-    integer, intent(in) :: nm, nq, nr
+    integer, intent(in) :: nm, nq
+    real(8), intent(in), dimension(nq) :: wgt_p
     real(8), intent(in), dimension(7, nq) :: xm_p
+    real(8), intent(in), dimension(7, 7, nq) :: l_xx_p
     real(8), intent(in), dimension(nm) :: t
     real(8), intent(in), dimension(2, nm) :: z
     real(8), intent(in), dimension(2, 2, nm) :: cov_ww
@@ -258,7 +260,6 @@ subroutine mix_filter(nm, nq, nr, xm_p, t, z, cov_ww, xm, l_xx)
     ! Local variables
     integer :: ns, j, info
     real(8), dimension(nq) :: loglik_p, loglik, w_mix, v
-    real(8), dimension(7, nq) :: l_xx_p
     real(8), dimension(7, nq) :: xm_q
     real(8), dimension(7, 7, nq) :: l_xx_q
     real(8), dimension(7, 8, nq) :: ps, work
@@ -282,19 +283,14 @@ subroutine mix_filter(nm, nq, nr, xm_p, t, z, cov_ww, xm, l_xx)
     w = w / sum(w)
 
     ! Prior log-likelihoods
-    loglik_p = 0.0D0
+    loglik_p = log(wgt_p)
 
-    ! Prior square root of covariance
-    l_xx_p = (xm_p - spread(sum(xm_p / nq, 2), 2, nq)) / sqrt(1.0D0 * nq * nr)
-    call dgelqf(7, nq, l_xx_p, 7, tau, work, 56*nq, info)
-    if (info /= 0) stop 'mix_filter: LQ decomposition failed!'
-    
     ! Iterate over mixture components
     do j = 1, nq
 
         ! Run filter
         call run_filter(ns, nm, xs, w, &
-            t, z, cov_ww, xm_p(1, j), l_xx_p, loglik_p(j), &
+            t, z, cov_ww, xm_p(1, j), l_xx_p(1, 1, j), loglik_p(j), &
             xm_q(1, j), l_xx_q(1, 1, j), loglik(j), info)
 
         ! Check whether filter was successful
@@ -1155,3 +1151,67 @@ subroutine eval_err_srspf(lam_tru, eta_tru, xi_tru, xm, l_xx, ti, tf, &
         rmse, chi2m, ok)
 
 end subroutine
+
+subroutine scale_mix(nq, xm_0, cov_xx_0, mstar, std_mstar, px, std_px, &
+        xm, l_xx)
+
+    implicit none
+
+    ! Inputs
+    integer, intent(in) :: nq
+    real(8), intent(in), dimension(7, nq) :: xm_0
+    real(8), intent(in), dimension(7, 7, nq) :: cov_xx_0
+    real(8), intent(in) :: mstar, std_mstar, px, std_px
+
+    ! Outputs
+    real(8), intent(out), dimension(7, nq) :: xm
+    real(8), intent(out), dimension(7, 7, nq) :: l_xx
+
+    ! Local variables
+    integer :: j, info
+    real(8) :: var_px, px2m 
+    real(8), dimension(7, 7, nq) :: cov_xx
+
+    ! Means of lambda
+    xm(1, :) = xm_0(1, :) - log(mstar) / 2
+
+    ! Means of eta
+    xm(2:3, :) = xm_0(2:3, :)
+
+    ! Means of xi
+    xm(4:7, :) = xm_0(4:7, :) * px
+
+    ! Variance of lambda
+    cov_xx(1, 1, :) = cov_xx_0(1, 1, :) + (std_mstar / mstar)**4 / 4
+
+    ! Covariances & cross-covariances of eta
+    cov_xx(2:3, 1:3, :) = cov_xx_0(2:3, 1:3, :)
+    cov_xx(1:3, 2:3, :) = cov_xx_0(1:3, 2:3, :)
+
+    ! Cross-covariances of xi
+    cov_xx(1:3, 4:7, :) = cov_xx_0(1:3, 4:7, :) * px
+    cov_xx(4:7, 1:3, :) = cov_xx_0(4:7, 1:3, :) * px
+
+    ! Variance & mean-square of parallax
+    var_px = std_px**2
+    px2m   = var_px + px**2 
+
+    ! Covariances of xi
+    do j = 1, nq
+        cov_xx(4:7, 4:7, j) = cov_xx_0(4:7, 4:7, j) * px2m &
+            + spread(xm_0(4:7, j), 2, 4) * spread(xm_0(4:7, j), 1, 4)  * var_px
+    end do
+
+    ! Square roots of covariances
+    l_xx = 0.0D0
+    do j = 1, nq
+
+        call dlacpy('L', 7, 7, cov_xx(1, 1, j), 7, l_xx(1, 1, j), 7)
+
+        call dpotrf('L', 7, l_xx(1, 1, j), 7, info) 
+
+        if (info /= 0) stop 'scale_mix: Cholesky decomposition failed' 
+
+    end do
+
+end

@@ -16,30 +16,19 @@ sys.path.append('..')
 
 import nexo
 
-import priors
+from get_priors import get_priors
 
-#-------------------------------------------------------------------------------
-
-nq = 1000
-
-nr = 200
-
-#-------------------------------------------------------------------------------
-
-# Random generator seed
-np.random.seed(909)
-
-# Mean parallax (mas)
-plxm = 100
+# Parallax (mas)
+plx = 100
 
 # Standard deviation of parallax (mas)
 std_plx = 0.1
 
-# Mean total mass (solar masses)
-mm = 1.0
+# Star mass (solar masses)
+mstar = 1.0
 
-# Standard deviation of total mass
-std_m = 0.1
+# Standard deviation of star mass (solar masses)
+std_mstar = 0.1
 
 # Read classical parameters
 coe_tru = ascii.read('gen/coe_tru.csv')
@@ -80,15 +69,15 @@ def fit_orbit(j):
             meas_table['raoff_err'], meas_table['decoff_err'], \
             meas_table['radec_corr'])
 
-    # Prior sample
-    xsamp = priors.nexo_priors(nq, mm, std_m, plxm, std_plx)
+    # Priors
+    wgt_p, xm_p, l_xx_p = get_priors(mstar, std_mstar, plx, std_plx, '../priors/')
 
     # Run filter
-    xm, l_xx = nexo.mix_filter(nr, xsamp, t, z, cov_ww)
+    xm, l_xx = nexo.mix_filter(wgt_p, xm_p, l_xx_p, t, z, cov_ww)
 
     # Compute confidence intervals
     ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp = \
-            nexo.coe_ci_stroud(xm, l_xx, plxm, std_plx, conf)
+            nexo.coe_ci_stroud(xm, l_xx, plx, std_plx, conf)
 
     # Stack confidence intervals
     ci = np.stack([ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per], -1)
