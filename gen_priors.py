@@ -12,10 +12,10 @@ import nexo
 np.random.seed(707)
 
 # Number of orbits
-norb = 10000
+norb = 20000
 
 # Number of mixture components
-nmix = 1000
+nmix = 2000
 
 # Star mass (solar masses)
 mstar = 1.0
