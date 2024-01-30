@@ -1182,7 +1182,7 @@ subroutine scale_mix(nq, xm_0, cov_xx_0, mstar, std_mstar, px, std_px, &
     xm(4:7, :) = xm_0(4:7, :) * px
 
     ! Variance of lambda
-    cov_xx(1, 1, :) = cov_xx_0(1, 1, :) + (std_mstar / mstar)**4 / 4
+    cov_xx(1, 1, :) = cov_xx_0(1, 1, :) + (std_mstar / mstar)**2 / 4
 
     ! Covariances & cross-covariances of eta
     cov_xx(2:3, 1:3, :) = cov_xx_0(2:3, 1:3, :)
