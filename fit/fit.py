@@ -13,23 +13,14 @@ import matplotlib.patches as patches
 from matplotlib.ticker import MaxNLocator
 
 import sys
+
 sys.path.append('..')
 
 import nexo
 
+from get_priors import get_priors
+
 #-------------------------------------------------------------------------------
-
-nq = 1000
-
-min_per = 0.1
-
-max_per = 10000
-
-std_lam = 0.5
-
-std_eta = 0.15
-
-npass = 2
 
 def nexo_fit(fname, ref):
 
@@ -83,11 +74,11 @@ def nexo_fit(fname, ref):
 
     #---------------------------------------------------------------------------
 
-    std_xi = 100 * px
+    # Priors
+    wgt_p, xm_p, l_xx_p = get_priors(mm, std_m, px, std_px, '../priors/')
 
     # Run filter
-    xm, l_xx = nexo.mix_filter(npass, nq, px, std_px, mm, std_m, \
-            min_per, max_per, std_lam, std_eta, t-tref, z, cov_ww)
+    xm, l_xx = nexo.mix_filter(wgt_p, xm_p, l_xx_p, t-tref, z, cov_ww)
 
     # Confidence
     conf = 0.95
