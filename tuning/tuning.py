@@ -16,27 +16,28 @@ sys.path.append('..')
 
 import nexo
 
-import priors
+from gen_priors import gen_priors
+from get_priors import get_priors
 
 #-------------------------------------------------------------------------------
 
-nq_vals = [1000, 2000, 5000, 10000]
+nmix_vals = range(200, 2100, 200)
 
-nr_vals = [100, 200, 500, 1000]
+path = 'priors/'
 
 #-------------------------------------------------------------------------------
 
 # Mean parallax (mas)
-plxm = 100
+plx = 100
 
 # Standard deviation of parallax (mas)
 std_plx = 0.1
 
-# Mean total mass (solar masses)
-mm = 1.0
+# Mean stellar mass (solar masses)
+mstar = 1.0
 
-# Standard deviation of total mass
-std_m = 0.1
+# Standard deviation of stellar mass
+std_mstar = 0.1
 
 # Read classical parameters
 coe_tru = ascii.read('gen/coe_tru.csv')
@@ -59,41 +60,41 @@ tf = 10.0
 #-------------------------------------------------------------------------------
 
 # Arrays
-err_dim = (len(nq_vals), len(nr_vals), norb)
+err_dim = (len(nmix_vals), norb)
 rmse    = np.empty(err_dim)
 chi2m   = np.empty(err_dim)
 
 # Iterate over number of components
-for i in range(len(nq_vals)):
+for i in range(len(nmix_vals)):
 
-    # Number of components
-    nq = nq_vals[i]
+    # Number of mixture components
+    nmix = nmix_vals[i]
 
-    # Iterate over scaling factor
-    for j in range(len(nr_vals)):
+    # Print status
+    print('---------------------------------------------------------------')
+    print('nmix = ' + str(nmix)                                            )
+    print('---------------------------------------------------------------')
 
-        # Scaling factor
-        nr = nr_vals[j]
+    # Random generator seed
+    np.random.seed(707)
+    
+    # Generate priors
+    gen_priors(nmix, path)
 
+    # Iterate over orbits
+    for k in range(norb):
+    
         # Print status
-        print('---------------------------------------------------------------')
-        print('nq = ' + str(nq) + '; nr = ' + str(nr)                          )
-        print('---------------------------------------------------------------')
+        print('Running case ' + str(k+1) + ' of ' + str(norb))
 
-        # Iterate over orbits
-        for k in range(norb):
+        # Read measurements
+        meas_table = ascii.read('gen/meas_' + str(k+1) + '.csv')
+
+        # Measurement times
+        t = (meas_table['epoch'] - ref_epoch) / 365.25
     
-            # Print status
-            print('Running case ' + str(k+1) + ' of ' + str(norb))
-
-            # Read measurements
-            meas_table = ascii.read('gen/meas_' + str(k+1) + '.csv')
-
-            # Measurement times
-            t = (meas_table['epoch'] - ref_epoch) / 365.25
-    
-            # Filter-friendly measurements
-            z, cov_ww = nexo.radec2z(
+        # Filter-friendly measurements
+        z, cov_ww = nexo.radec2z(
                 meas_table['raoff'],
                 meas_table['decoff'],
                 meas_table['raoff_err'],
@@ -101,32 +102,32 @@ for i in range(len(nq_vals)):
                 meas_table['radec_corr']
                 )
 
-            # Prior sample
-            xsamp = priors.nexo_priors(nq, mm, std_m, plxm, std_plx)
 
-            # Run filter
-            xm, l_xx = nexo.mix_filter(nr, xsamp, t, z, cov_ww)
+        # Priors
+        wgt_p, xm_p, l_xx_p = get_priors(mstar, std_mstar, plx, std_plx, path)
 
-            # Compute errors
-            rmse_k, chi2m_k, ok = nexo.eval_err_srspf(lam[k], eta[:, k], Xi[:, :, k], \
+        # Run filter
+        xm, l_xx = nexo.mix_filter(wgt_p, xm_p, l_xx_p, t, z, cov_ww)
+
+        # Compute errors
+        rmse_k, chi2m_k, ok = nexo.eval_err_srspf(lam[k], eta[:, k], Xi[:, :, k], \
                                         xm, l_xx, ti, tf)
-            # Stop if error in error
-            if (not ok):
-                rmse_k  = np.NAN
-                chi2m_k = np.NAN
+        # Stop if error in error
+        if (not ok):
+            rmse_k  = np.NAN
+            chi2m_k = np.NAN
 
-            # Save errors
-            rmse [i, j, k] = rmse_k
-            chi2m[i, j, k] = chi2m_k
+        # Save errors
+        rmse [i, k] = rmse_k
+        chi2m[i, k] = chi2m_k
 
 # Overall means
-rmse_overall  = np.sqrt(np.nanmean(rmse**2, axis=2))
-chi2m_overall = np.nanmean(chi2m, axis=2) 
+rmse_overall  = np.sqrt(np.nanmean(rmse**2, axis=1))
+chi2m_overall = np.nanmean(chi2m, axis=1) 
 
 # Save mean values
 np.savetxt('tables/rmse.csv',  rmse_overall,  delimiter=',')
 np.savetxt('tables/chi2m.csv', chi2m_overall, delimiter=',')
 
 # Save tuning parameters
-np.savetxt('tables/nq.csv', np.array(nq_vals), delimiter=',')
-np.savetxt('tables/nr.csv', np.array(nr_vals), delimiter=',')
+np.savetxt('tables/nmix.csv', np.array(nmix_vals), delimiter=',')
