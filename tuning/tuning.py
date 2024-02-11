@@ -21,7 +21,7 @@ from get_priors import get_priors
 
 #-------------------------------------------------------------------------------
 
-nmix_vals = range(200, 2100, 200)
+nmix_vals = range(100, 1100, 100)
 
 path = 'priors/'
 
