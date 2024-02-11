@@ -16,16 +16,17 @@ sys.path.append('..')
 
 import nexo
 
-from gen_priors import gen_priors
-from get_priors import get_priors
+#-------------------------------------------------------------------------------
+
+alpha_vals = np.linspace(0.1, 0.9)
 
 #-------------------------------------------------------------------------------
 
-nmix_vals = range(100, 1100, 100)
+# Standard deviation of semi-major axis
+std_a = 14 
 
-path = 'priors/'
-
-#-------------------------------------------------------------------------------
+# Standard deviation of eta
+std_eta = 0.20
 
 # Mean parallax (mas)
 plx = 100
@@ -60,26 +61,20 @@ tf = 10.0
 #-------------------------------------------------------------------------------
 
 # Arrays
-err_dim = (len(nmix_vals), norb)
+err_dim = (len(alpha_vals), norb)
 rmse    = np.empty(err_dim)
 chi2m   = np.empty(err_dim)
 
 # Iterate over number of components
-for i in range(len(nmix_vals)):
+for i in range(len(alpha_vals)):
 
-    # Number of mixture components
-    nmix = nmix_vals[i]
+    # Alpha value
+    alpha = alpha_vals[i]
 
     # Print status
     print('---------------------------------------------------------------')
-    print('nmix = ' + str(nmix)                                            )
+    print('alpha = ' + str(alpha)                                            )
     print('---------------------------------------------------------------')
-
-    # Random generator seed
-    np.random.seed(707)
-    
-    # Generate priors
-    gen_priors(nmix, path)
 
     # Iterate over orbits
     for k in range(norb):
@@ -102,12 +97,9 @@ for i in range(len(nmix_vals)):
                 meas_table['radec_corr']
                 )
 
-
-        # Priors
-        wgt_p, xm_p, l_xx_p = get_priors(mstar, std_mstar, plx, std_plx, path)
-
         # Run filter
-        xm, l_xx = nexo.mix_filter(wgt_p, xm_p, l_xx_p, t, z, cov_ww)
+        xm, l_xx = nexo.mix_filter_pop(std_a, std_eta, mstar, std_mstar, \
+            plx, std_plx, alpha, t, z, cov_ww)
 
         # Compute errors
         rmse_k, chi2m_k, ok = nexo.eval_err_srspf(lam[k], eta[:, k], Xi[:, :, k], \
@@ -130,4 +122,4 @@ np.savetxt('tables/rmse.csv',  rmse_overall,  delimiter=',')
 np.savetxt('tables/chi2m.csv', chi2m_overall, delimiter=',')
 
 # Save tuning parameters
-np.savetxt('tables/nmix.csv', np.array(nmix_vals), delimiter=',')
+np.savetxt('tables/alpha.csv', np.array(alpha_vals), delimiter=',')

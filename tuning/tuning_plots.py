@@ -7,7 +7,7 @@ from astropy.table import Table
 
 rmse  = np.genfromtxt('tables/rmse.csv',  delimiter=',')
 chi2m = np.genfromtxt('tables/chi2m.csv', delimiter=',')
-nmix  = np.genfromtxt('tables/nmix.csv', delimiter=',')
+alpha  = np.genfromtxt('tables/alpha.csv', delimiter=',')
 
 name = ['rmse', 'chi2m']
 
@@ -23,9 +23,9 @@ for i in range(2):
 
     plt.yscale('log')
 
-    plt.plot(nmix, val[i])
+    plt.plot(alpha, val[i])
 
-    plt.xlabel("Number of Mixture Components")
+    plt.xlabel("Alpha")
     plt.ylabel(label[i])
 
     plt.tight_layout()

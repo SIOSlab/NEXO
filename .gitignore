@@ -1,5 +1,3 @@
-priors/*
-
 quadpack_double.f90
 quadrule.f90
 stroud.f90

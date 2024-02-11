@@ -16,7 +16,16 @@ sys.path.append('..')
 
 import nexo
 
-from get_priors import get_priors
+#-------------------------------------------------------------------------------
+
+# Standard deviation of semi-major axis
+std_a = 14 
+
+# Standard deviation of eta
+std_eta = 0.20
+
+# Alpha value
+alpha = 0.3
 
 # Parallax (mas)
 plx = 100
@@ -69,11 +78,9 @@ def fit_orbit(j):
             meas_table['raoff_err'], meas_table['decoff_err'], \
             meas_table['radec_corr'])
 
-    # Priors
-    wgt_p, xm_p, l_xx_p = get_priors(mstar, std_mstar, plx, std_plx, '../priors/')
-
     # Run filter
-    xm, l_xx = nexo.mix_filter(wgt_p, xm_p, l_xx_p, t, z, cov_ww)
+    xm, l_xx = nexo.mix_filter_pop(std_a, std_eta, mstar, std_mstar, \
+            plx, std_plx, alpha, t, z, cov_ww)
 
     # Compute confidence intervals
     ci_sma, ci_ecc, ci_inc, ci_lan, ci_aop, ci_mae, ci_per, ci_tp = \

@@ -337,6 +337,134 @@ subroutine mix_filter(nm, nq, wgt_p, xm_p, l_xx_p, t, z, cov_ww, xm, l_xx)
 
 end subroutine
 
+subroutine mix_filter_pop(nm, std_a, std_eta, mm, std_m, px, std_px, alpha, &
+        t, z, cov_ww, xm, l_xx)
+
+    implicit none
+
+    ! Inputs
+    integer, intent(in) :: nm
+    real(8), intent(in) :: std_a, std_eta, mm, std_m, px, std_px, alpha
+    real(8), intent(in), dimension(nm) :: t
+    real(8), intent(in), dimension(2, nm) :: z
+    real(8), intent(in), dimension(2, 2, nm) :: cov_ww
+
+    ! Outputs
+    real(8), intent(out), dimension(7) :: xm
+    real(8), intent(out), dimension(7, 7) :: l_xx
+
+    ! Local variables
+    integer :: nq, j, lwork, info
+    real(8), dimension(8) :: ym
+    real(8), dimension(8, 8) :: l_yy
+    real(8), dimension(7) :: tau
+    real(8), allocatable :: wc(:), wgt_p(:), yc(:, :), y(:, :), &
+        u(:), v(:), sma(:), lam(:), x(:, :), work(:, :), &
+        xm_p(:, :), l_xx_p(:, :, :)
+    logical, allocatable :: ok(:)
+
+    ! Constants
+    real(8), parameter :: twopi = 8 * atan(1.0D0)
+    
+    ! Mean of y
+    ym = 0
+    ym(1) = mm
+    ym(2) = px
+        
+    ! Square root of covariance of y
+    l_yy = 0
+    l_yy(1, 1) = std_m
+    l_yy(2, 2) = std_px
+    l_yy(3, 3) = std_eta
+    l_yy(4, 4) = std_eta
+    l_yy(5, 5) = std_a
+    l_yy(6, 6) = std_a
+    l_yy(7, 7) = std_a
+    l_yy(8, 8) = std_a
+
+    ! Number of mixture components
+    call en_r2_05_3_size(8, nq)
+
+    ! Allocate arrays
+    allocate(wc(nq), wgt_p(nq), yc(8, nq), y(8, nq), &
+        u(nq), v(nq), sma(nq), lam(nq), x(7, nq), work(7, nq), &
+        xm_p(7, nq), l_xx_p(7, 7, nq))
+    allocate(ok(nq))
+
+    ! Cubature rule
+    call en_r2_05_3(8, nq, yc, wgt_p)
+ 
+    ! Scale cubature points
+    call dtrmm('L', 'L', 'N', 'N', 8, nq, sqrt(2.0D0), l_yy, 8, yc, 8)
+
+    ! Normalize cubature weights
+    wgt_p = wgt_p / sum(wgt_p)
+
+    ! Initalize covariances of x to zero
+    l_xx_p = 0
+
+    ! Length of work array
+    lwork = 7 * nq
+
+    ! Compute mixture components
+    do j = 1, nq
+        
+        ! Sample points for y
+        y = alpha * yc + spread((1 - alpha) * yc(:, j) + ym, 2, nq)
+
+        ! Half of squared Frobenius norm of xi-prime
+        u = 0.5D0 * (y(5, :)**2 + y(6, :)**2 + &
+                     y(7, :)**2 + y(8, :)**2)
+
+        ! Determinant of xi-prime
+        v = y(5, :) * y(8, :) - y(6, :) * y(7, :)
+
+        ! Semi-major axis
+        sma = sqrt(u + sqrt((u + v) * (u - v)))
+
+        ! Log-period
+        lam = 1.5D0 * log(sma) - 0.5D0 * log(y(1, :))
+
+        ! Check log periods
+        ok = (lam > -huge(lam)) .and. (lam < huge(lam))
+
+        ! Weights
+        wc = wgt_p
+
+        ! Set bad log-periods & weights to zero
+        where (.not. ok)
+           lam = 0
+           wc  = 0
+        end where
+
+        ! Re-normalize weights
+        wc = wc / sum(wc)
+
+        ! Convert to nonsingular orbital elements
+        x(1,   :) = lam
+        x(2:3, :) = y(3:4, :)
+        x(4:7, :) = y(5:8, :) * spread(y(2, :), 1, 4)
+
+        ! Mean of x
+        xm_p(:, j) = matmul(x, wgt_p)
+
+        ! Centralized & square-root weighted x values
+        x = (x - spread(xm_p(:, j), 2, nq)) * spread(sqrt(wgt_p), 1, 7)
+
+        ! LQ factorization
+        call dgelqf(7, nq, x, 7, tau, work, lwork, info)
+        if (info /= 0) stop 'mix_filter_pop: LQ decomposition failed!'
+
+        ! Copy square root of covariance
+        call dlacpy('L', 7, 7, x, 7, l_xx_p(1, 1, j), 7) 
+
+    end do
+
+    ! Run mixture filter
+    call mix_filter(nm, nq, wgt_p, xm_p, l_xx_p, t, z, cov_ww, xm, l_xx)
+
+end
+
 subroutine coe2nse(n, px, sma, ecc, inc, lan, aop, mae, per, lam, eta, xi)
 
     implicit none
