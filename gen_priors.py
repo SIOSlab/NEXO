@@ -9,7 +9,7 @@ import nexo
 def gen_priors(nmix, path):
 
     # Number of orbits
-    norb = 100000
+    norb = 20000
 
     # Star mass (solar masses)
     mstar = 1.0

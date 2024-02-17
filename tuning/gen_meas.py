@@ -15,7 +15,7 @@ import time
 np.random.seed(303)
 
 # Number of orbits
-norb = 100
+norb = 1000
 
 # Number of measurements
 nmeas = 5
