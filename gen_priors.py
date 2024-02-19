@@ -9,7 +9,7 @@ import nexo
 def gen_priors(nmix, path):
 
     # Number of orbits
-    norb = 20000
+    norb = 100000
 
     # Star mass (solar masses)
     mstar = 1.0
@@ -76,7 +76,7 @@ def gen_priors(nmix, path):
     x[:, 6] = xi[1, 1, :]
 
     # Generate Gaussian mixture
-    gm = GaussianMixture(n_components = nmix).fit(x)
+    gm = GaussianMixture(n_components = nmix, init_params='random_from_data').fit(x)
 
     # Get parameters
     wgt    = gm.weights_
