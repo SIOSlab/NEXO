@@ -17,15 +17,13 @@ val = [rmse, chi2m]
 
 for i in range(2):
 
-    plt.rc('font', size=10)
+    plt.rc('font', size=8)
 
-    plt.figure(figsize = (6, 4))
-
-    plt.yscale('log')
+    plt.figure(figsize = (3, 3))
 
     plt.plot(nmix, val[i])
 
-    plt.xlabel("Number of Mixture Components")
+    plt.xlabel(r'$K$')
     plt.ylabel(label[i])
 
     plt.tight_layout()

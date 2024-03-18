@@ -53,7 +53,7 @@ lb = -ub
 
 #-------------------------------------------------------------------------------
 
-fig, axs = plt.subplots(7, 7)
+fig, axs = plt.subplots(7, 7, gridspec_kw = {'wspace':0, 'hspace':0})
 
 for i in range(7):
 
@@ -62,9 +62,9 @@ for i in range(7):
         axs[i, j].set_axis_off()
 
 labels = [r'$\lambda$', r'$\eta_1$', r'$\eta_2$', \
-         r'$\Xi_{11}$', r'$\Xi_{21}$', r'$\Xi_{21}$', r'$\Xi_{22}$']
+         r'$\Xi_{11}$', r'$\Xi_{21}$', r'$\Xi_{12}$', r'$\Xi_{22}$']
 
-plt.rc('font', size=20)
+plt.rc('font', size=10)
 
 #-------------------------------------------------------------------------------
 
@@ -86,12 +86,14 @@ for i in range(7):
 
     axs[i, i].set_ylim([0, 1.1 * np.max(y)])
 
-    axs[i, i].set_xticks([lb[i], 0, ub[i]])
+    axs[i, i].set_xticks([lb[i]/2, 0, ub[i]/2])
 
+    axs[i, i].tick_params(axis='x', labelsize=6, labelrotation=45)
+    
     if i == 6:
-        axs[i, i].set_xlabel(labels[i])
+        axs[i, i].set_xlabel(labels[i], fontsize=8)
     else:
-        axs[i, i].set_xticklabels([])
+        axs[i, i].set_xticks([])
 
 
 #-------------------------------------------------------------------------------
@@ -115,7 +117,7 @@ for i in range(7):
 
         g = np.empty((num, num, ncomp))
         for k in range(ncomp):
-            g[:, :, k] = multivariate_normal.logpdf(pos, mean=x_ij[:, k], \
+            g[:, :, k] = multivariate_normal.pdf(pos, mean=x_ij[:, k], \
                     cov=cov_ij[:, :, k])
 
         rho = np.tensordot(g, wgt, (2, 0))
@@ -125,21 +127,24 @@ for i in range(7):
         axs[i, j].set_xlim([lb[j], ub[j]])
         axs[i, j].set_ylim([lb[i], ub[i]])
 
-        axs[i, j].set_xticks([lb[j], 0, ub[j]])
-        axs[i, j].set_yticks([lb[i], 0, ub[i]])
+        axs[i, j].set_xticks([lb[j]/2, 0, ub[j]/2])
+        axs[i, j].set_yticks([lb[i]/2, 0, ub[i]/2])
+
+        axs[i, j].tick_params(axis='x', labelsize=6, labelrotation=45)
+        axs[i, j].tick_params(axis='y', labelsize=6)
 
         if i == 6:
-            axs[i, j].set_xlabel(labels[j])
+            axs[i, j].set_xlabel(labels[j], fontsize=8)
         else:
             axs[i, j].set_xticklabels([])
 
         if j == 0:
-            axs[i, j].set_ylabel(labels[i])
+            axs[i, j].set_ylabel(labels[i], fontsize=8)
         else:
-            axs[i, j].set_yticklabels([])
+            axs[i, j].set_yticks([])
 
 #-------------------------------------------------------------------------------
 
-fig.set_size_inches(12, 12)
+fig.set_size_inches(6, 6)
 fig.tight_layout()
 plt.savefig('priors/prior_plots.pdf')
